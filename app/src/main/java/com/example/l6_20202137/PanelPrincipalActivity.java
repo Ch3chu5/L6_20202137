@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
@@ -36,18 +37,20 @@ public class PanelPrincipalActivity extends AppCompatActivity {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 int id = item.getItemId();
+                Fragment selectedFragment = null;
 
                 if (id == R.id.nav_ingresos) {
-                    // Aquí iría el código para mostrar la pantalla de ingresos
-                    return true;
+                    selectedFragment = new IngresoFragment();
+                    return loadFragment(selectedFragment);
                 } else if (id == R.id.nav_egresos) {
-                    // Aquí iría el código para mostrar la pantalla de egresos
-                    return true;
+                    selectedFragment = new EgresoFragment();
+                    return loadFragment(selectedFragment);
                 } else if (id == R.id.nav_resumen) {
-                    // Aquí iría el código para mostrar la pantalla de resumen
+                    // Aquí irá el código para mostrar el fragmento de resumen
+                    Toast.makeText(PanelPrincipalActivity.this, "Resumen (próximamente)", Toast.LENGTH_SHORT).show();
                     return true;
                 } else if (id == R.id.nav_cerrar_sesion) {
-                    // Cerrar la sesión y actualizar el estado en Firestore
+                    // Cerrar la sesión
                     cerrarSesion();
                     return true;
                 }
@@ -55,6 +58,22 @@ public class PanelPrincipalActivity extends AppCompatActivity {
                 return false;
             }
         });
+
+        // Cargar el fragmento de ingresos por defecto
+        if (savedInstanceState == null) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_ingresos);
+        }
+    }
+
+    private boolean loadFragment(Fragment fragment) {
+        if (fragment != null) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .commit();
+            return true;
+        }
+        return false;
     }
 
     private void cerrarSesion() {
