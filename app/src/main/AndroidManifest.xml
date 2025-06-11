@@ -39,6 +39,9 @@
         <activity
             android:name=".PanelPrincipalActivity"
             android:exported="false" />
+        <activity
+            android:name=".CrearPasswordActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

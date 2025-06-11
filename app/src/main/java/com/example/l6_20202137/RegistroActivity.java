@@ -21,9 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 public class RegistroActivity extends AppCompatActivity {
 
@@ -152,41 +150,22 @@ public class RegistroActivity extends AppCompatActivity {
         String dni = etDni.getText().toString().trim();
         String fechaNacimiento = etFechaNacimiento.getText().toString().trim();
 
-        // Crear un mapa con los datos a guardar
-        Map<String, Object> userData = new HashMap<>();
-        userData.put("nombres", nombres);
-        userData.put("telefono", telefono);
-        userData.put("dni", dni);
-        userData.put("fechaNacimiento", fechaNacimiento);
-        userData.put("sesion", "si");  // Actualizar el estado de sesión a "si"
+        // En lugar de guardar directamente, redirigimos al usuario a la pantalla de creación de contraseña
+        Intent intent = new Intent(RegistroActivity.this, CrearPasswordActivity.class);
 
-        // Preservar el correo si está disponible
-        if (userEmail != null && !userEmail.isEmpty()) {
-            userData.put("correo", userEmail);
-        }
+        // Pasar los datos del usuario al siguiente activity
+        intent.putExtra("user_id", userId);
+        intent.putExtra("user_email", userEmail);
 
-        // Mostrar un mensaje de carga
-        Toast.makeText(this, "Guardando información...", Toast.LENGTH_SHORT).show();
+        // Pasar los datos de registro
+        intent.putExtra("nombres", nombres);
+        intent.putExtra("telefono", telefono);
+        intent.putExtra("dni", dni);
+        intent.putExtra("fechaNacimiento", fechaNacimiento);
 
-        Log.d(TAG, "Intentando guardar datos para el usuario con ID: " + userId);
-
-        // Usar set() en lugar de update() para crear el documento si no existe
-        db.collection("usuarios").document(userId)
-            .set(userData)  // Usar set() en lugar de update()
-            .addOnSuccessListener(aVoid -> {
-                Log.d(TAG, "Datos de usuario guardados correctamente");
-                Toast.makeText(RegistroActivity.this, "Registro completado con éxito", Toast.LENGTH_SHORT).show();
-
-                // Redirigir al usuario al panel principal
-                Intent intent = new Intent(RegistroActivity.this, PanelPrincipalActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                finish();
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al guardar los datos del usuario", e);
-                Toast.makeText(RegistroActivity.this, "Error al completar el registro: " + e.getMessage(),
-                        Toast.LENGTH_LONG).show();
-            });
+        // Iniciar la actividad de creación de contraseña
+        startActivity(intent);
+        // No utilizamos finish() aquí para permitir que el usuario pueda volver atrás si lo desea
     }
 }
+

@@ -175,33 +175,59 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            Log.d(TAG, "Intentando guardar usuario con UID: " + uid + " y correo: " + correo);
-
-            // Crear un mapa con los datos a guardar
-            Map<String, Object> userData = new HashMap<>();
-            userData.put("correo", correo);
-            userData.put("sesion", "no");
+            Log.d(TAG, "Verificando si el usuario ya existe en Firestore: " + uid);
 
             // Usar runOnUiThread para asegurar que la operación se realiza en el hilo principal
             runOnUiThread(() -> {
-                // Guardar en Firestore en la colección "usuarios" con el UID como ID del documento
-                FirebaseFirestore.getInstance().collection("usuarios")
-                        .document(uid)
-                        .set(userData)
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d(TAG, "Usuario guardado correctamente en Firestore");
-                            // Verificar el estado de la sesión del usuario
-                            checkUserSessionStatus(user);
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e(TAG, "Error al guardar el usuario en Firestore", e);
-                            // Intentar mostrar más detalles del error
+                // Primero verificamos si el documento ya existe
+                db.collection("usuarios")
+                    .document(uid)
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            DocumentSnapshot document = task.getResult();
+                            if (document.exists()) {
+                                // El usuario ya existe, no modificamos sus datos
+                                Log.d(TAG, "Usuario ya existe en Firestore, manteniendo datos existentes");
+                                // Solo actualizamos el correo si ha cambiado
+                                if (!correo.equals(document.getString("correo"))) {
+                                    db.collection("usuarios")
+                                        .document(uid)
+                                        .update("correo", correo)
+                                        .addOnSuccessListener(aVoid -> Log.d(TAG, "Correo actualizado correctamente"));
+                                }
+                                // Verificamos el estado de sesión directamente
+                                checkUserSessionStatus(user);
+                            } else {
+                                // El usuario no existe, lo creamos con "sesion" en "no"
+                                Log.d(TAG, "Usuario nuevo, creando documento en Firestore");
+                                Map<String, Object> userData = new HashMap<>();
+                                userData.put("correo", correo);
+                                userData.put("sesion", "no");
+
+                                db.collection("usuarios")
+                                    .document(uid)
+                                    .set(userData)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Log.d(TAG, "Usuario nuevo guardado correctamente en Firestore");
+                                        checkUserSessionStatus(user);
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.e(TAG, "Error al guardar el usuario en Firestore", e);
+                                        Toast.makeText(MainActivity.this,
+                                                "Error al guardar datos: " + e.getMessage(),
+                                                Toast.LENGTH_LONG).show();
+                                        updateUI(user);
+                                    });
+                            }
+                        } else {
+                            Log.e(TAG, "Error al verificar si el usuario existe", task.getException());
                             Toast.makeText(MainActivity.this,
-                                    "Error al guardar datos: " + e.getMessage(),
+                                    "Error al verificar usuario: " + task.getException().getMessage(),
                                     Toast.LENGTH_LONG).show();
-                            // Aún así actualizamos la UI para que el usuario pueda continuar
                             updateUI(user);
-                        });
+                        }
+                    });
             });
         } catch (Exception e) {
             Log.e(TAG, "Error general al guardar usuario", e);
