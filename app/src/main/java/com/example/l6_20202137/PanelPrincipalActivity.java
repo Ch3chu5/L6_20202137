@@ -44,11 +44,9 @@ public class PanelPrincipalActivity extends AppCompatActivity {
                     return loadFragment(selectedFragment);
                 } else if (id == R.id.nav_egresos) {
                     selectedFragment = new EgresoFragment();
+                    return loadFragment(selectedFragment);                } else if (id == R.id.nav_resumen) {
+                    selectedFragment = new ResumenFragment();
                     return loadFragment(selectedFragment);
-                } else if (id == R.id.nav_resumen) {
-                    // Aquí irá el código para mostrar el fragmento de resumen
-                    Toast.makeText(PanelPrincipalActivity.this, "Resumen (próximamente)", Toast.LENGTH_SHORT).show();
-                    return true;
                 } else if (id == R.id.nav_cerrar_sesion) {
                     // Cerrar la sesión
                     cerrarSesion();
