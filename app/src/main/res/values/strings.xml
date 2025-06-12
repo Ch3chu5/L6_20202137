@@ -2,5 +2,10 @@
     <string name="app_name">L6_20202137</string>
     <!-- Este valor es generado automáticamente por el plugin de Google Services -->
     <string name="default_web_client_id">355002800970-j1q18uhidupumeibft7cgsfvsprk3vuq.apps.googleusercontent.com</string>
+
+    <!-- Facebook configuration -->
+    <string name="facebook_app_id">1268680718196585</string>
+    <string name="fb_login_protocol_scheme">fb1268680718196585</string>
+    <string name="facebook_client_token">YOUR_CLIENT_TOKEN</string>
 </resources>
 

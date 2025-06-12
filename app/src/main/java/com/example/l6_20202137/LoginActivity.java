@@ -9,10 +9,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.regex.Pattern;
 
@@ -21,11 +30,17 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputLayout tilEmail;
     private TextInputEditText etEmail, etPassword;
     private Button btnLogin;
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        // Inicializar Firebase Auth y Firestore
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         tilEmail = findViewById(R.id.tilEmail);
         etEmail = findViewById(R.id.etEmail);
@@ -67,11 +82,80 @@ public class LoginActivity extends AppCompatActivity {
                     return;
                 }
 
-                Intent intent = new Intent(LoginActivity.this, PanelPrincipalActivity.class);
-                startActivity(intent);
-                finish();
+                // Mostrar un mensaje de carga
+                Toast.makeText(LoginActivity.this, "Verificando credenciales...", Toast.LENGTH_SHORT).show();
+
+                // Deshabilitar el botón para evitar múltiples intentos
+                btnLogin.setEnabled(false);
+
+                // Verificar las credenciales con Firebase Authentication
+                signIn(email, password);
             }
         });
+    }
+
+    private void signIn(String email, String password) {
+        mAuth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    // Habilitar el botón nuevamente
+                    btnLogin.setEnabled(true);
+
+                    if (task.isSuccessful()) {
+                        // Login exitoso, verificar el estado en Firestore
+                        checkUserSessionStatus(mAuth.getCurrentUser().getUid());
+                    } else {
+                        // Si falla el login, mostrar un mensaje de error específico
+                        try {
+                            throw task.getException();
+                        } catch (FirebaseAuthInvalidUserException e) {
+                            Toast.makeText(LoginActivity.this, "El correo no está registrado", Toast.LENGTH_SHORT).show();
+                        } catch (FirebaseAuthInvalidCredentialsException e) {
+                            Toast.makeText(LoginActivity.this, "Contraseña incorrecta", Toast.LENGTH_SHORT).show();
+                        } catch (Exception e) {
+                            Toast.makeText(LoginActivity.this, "Error de autenticación: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            });
+    }
+
+    private void checkUserSessionStatus(String uid) {
+        db.collection("usuarios").document(uid).get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        // Verificar si el usuario completó el registro
+                        String sesionValue = document.getString("sesion");
+
+                        if ("si".equals(sesionValue)) {
+                            // Usuario completamente registrado
+                            navigateToPanelPrincipal();
+                        } else {
+                            // El usuario necesita completar el registro
+                            Toast.makeText(LoginActivity.this,
+                                "Por favor, completa tu registro primero",
+                                Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(LoginActivity.this,
+                            "No se encontró información de usuario",
+                            Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(LoginActivity.this,
+                        "Error al verificar el estado del usuario",
+                        Toast.LENGTH_SHORT).show();
+                }
+            });
+    }
+
+    private void navigateToPanelPrincipal() {
+        Intent intent = new Intent(LoginActivity.this, PanelPrincipalActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private boolean isValidEmail(String email) {
