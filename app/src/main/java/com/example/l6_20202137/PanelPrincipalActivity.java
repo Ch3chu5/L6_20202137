@@ -66,7 +66,6 @@ public class PanelPrincipalActivity extends AppCompatActivity {
             }
         });
 
-        // Cargar el fragmento de ingresos por defecto
         if (savedInstanceState == null) {
             bottomNavigationView.setSelectedItemId(R.id.nav_ingresos);
         }
@@ -83,7 +82,6 @@ public class PanelPrincipalActivity extends AppCompatActivity {
                 tvBienvenida.setVisibility(TextView.VISIBLE);
                 break;
             case "resumen":
-                // Ocultar el mensaje en la sección de resumen
                 tvBienvenida.setVisibility(TextView.GONE);
                 break;
             default:
@@ -105,13 +103,10 @@ public class PanelPrincipalActivity extends AppCompatActivity {
     }
 
     private void cerrarSesion() {
-        // Mostrar mensaje de carga
         Toast.makeText(this, "Cerrando sesión...", Toast.LENGTH_SHORT).show();
 
-        // Cerrar sesión en Firebase Auth
         mAuth.signOut();
 
-        // Redirigir al usuario a la pantalla principal
         Intent intent = new Intent(PanelPrincipalActivity.this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

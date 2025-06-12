@@ -42,7 +42,6 @@ public class EgresoDialogFragment extends DialogFragment {
     private EgresoFragment.OnEgresoGuardadoListener listener;
 
     public EgresoDialogFragment() {
-        // Constructor vacío requerido
     }
 
     @Override
@@ -50,20 +49,16 @@ public class EgresoDialogFragment extends DialogFragment {
         super.onCreate(savedInstanceState);
         setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Material_Light_Dialog_MinWidth);
 
-        // Inicializar Firebase
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        // Obtener ID del usuario actual
         if (mAuth.getCurrentUser() != null) {
             userId = mAuth.getCurrentUser().getUid();
         }
 
-        // Inicializar formato de fecha
         dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         calendar = Calendar.getInstance();
 
-        // Verificar si es una edición
         Bundle args = getArguments();
         if (args != null && args.containsKey("egreso")) {
             egresoExistente = (Egreso) args.getSerializable("egreso");
@@ -76,7 +71,6 @@ public class EgresoDialogFragment extends DialogFragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_egreso, container, false);
 
-        // Inicializar vistas
         etTitulo = view.findViewById(R.id.etTitulo);
         etMonto = view.findViewById(R.id.etMonto);
         etDescripcion = view.findViewById(R.id.etDescripcion);
@@ -84,21 +78,16 @@ public class EgresoDialogFragment extends DialogFragment {
         btnGuardar = view.findViewById(R.id.btnGuardar);
         btnCancelar = view.findViewById(R.id.btnCancelar);
 
-        // Configurar título del diálogo
         getDialog().setTitle(esEdicion ? "Editar Egreso" : "Nuevo Egreso");
 
-        // Configurar selector de fecha
         etFecha.setOnClickListener(v -> mostrarSelectorFecha());
 
-        // Si es edición, cargar datos del egreso existente
         if (esEdicion && egresoExistente != null) {
             cargarDatosEgreso();
         } else {
-            // Por defecto mostrar la fecha actual
             etFecha.setText(dateFormat.format(calendar.getTime()));
         }
 
-        // Configurar botones
         btnGuardar.setOnClickListener(v -> guardarEgreso());
         btnCancelar.setOnClickListener(v -> dismiss());
 
@@ -136,24 +125,20 @@ public class EgresoDialogFragment extends DialogFragment {
     }
 
     private void cargarDatosEgreso() {
-        // Cargar datos del egreso en los campos
         etTitulo.setText(egresoExistente.getTitulo());
         etMonto.setText(String.format(Locale.getDefault(), "%.2f", egresoExistente.getMonto()));
         etDescripcion.setText(egresoExistente.getDescripcion());
 
-        // Configurar fecha
         if (egresoExistente.getFecha() != null) {
             calendar.setTime(egresoExistente.getFecha());
             etFecha.setText(dateFormat.format(egresoExistente.getFecha()));
         }
 
-        // Deshabilitar edición del título en modo edición
         etTitulo.setEnabled(false);
         etFecha.setEnabled(false);
     }
 
     private void guardarEgreso() {
-        // Validar campos
         if (!validarCampos()) {
             return;
         }
@@ -164,10 +149,8 @@ public class EgresoDialogFragment extends DialogFragment {
         Date fecha = calendar.getTime();
 
         if (esEdicion) {
-            // Actualizar egreso existente
             actualizarEgreso(monto, descripcion);
         } else {
-            // Crear nuevo egreso
             crearNuevoEgreso(titulo, monto, descripcion, fecha);
         }
     }
@@ -175,13 +158,11 @@ public class EgresoDialogFragment extends DialogFragment {
     private boolean validarCampos() {
         boolean esValido = true;
 
-        // Validar título
         if (TextUtils.isEmpty(etTitulo.getText())) {
             etTitulo.setError("El título es obligatorio");
             esValido = false;
         }
 
-        // Validar monto
         if (TextUtils.isEmpty(etMonto.getText())) {
             etMonto.setError("El monto es obligatorio");
             esValido = false;
@@ -198,7 +179,6 @@ public class EgresoDialogFragment extends DialogFragment {
             }
         }
 
-        // Validar fecha
         if (TextUtils.isEmpty(etFecha.getText())) {
             etFecha.setError("La fecha es obligatoria");
             esValido = false;
@@ -208,10 +188,8 @@ public class EgresoDialogFragment extends DialogFragment {
     }
 
     private void crearNuevoEgreso(String titulo, double monto, String descripcion, Date fecha) {
-        // Crear objeto egreso
         Egreso nuevoEgreso = new Egreso(titulo, monto, descripcion, fecha);
 
-        // Guardar en Firestore
         db.collection("usuarios").document(userId)
             .collection("egresos")
             .add(nuevoEgreso)
@@ -229,7 +207,6 @@ public class EgresoDialogFragment extends DialogFragment {
     }
 
     private void actualizarEgreso(double monto, String descripcion) {
-        // Solo actualizar campos permitidos: monto y descripción
         db.collection("usuarios").document(userId)
             .collection("egresos")
             .document(egresoExistente.getId())

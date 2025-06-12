@@ -42,7 +42,6 @@ public class IngresoDialogFragment extends DialogFragment {
     private IngresoFragment.OnIngresoGuardadoListener listener;
 
     public IngresoDialogFragment() {
-        // Constructor vacío requerido
     }
 
     @Override
@@ -50,20 +49,16 @@ public class IngresoDialogFragment extends DialogFragment {
         super.onCreate(savedInstanceState);
         setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Material_Light_Dialog_MinWidth);
 
-        // Inicializar Firebase
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        // Obtener ID del usuario actual
         if (mAuth.getCurrentUser() != null) {
             userId = mAuth.getCurrentUser().getUid();
         }
 
-        // Inicializar formato de fecha
         dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         calendar = Calendar.getInstance();
 
-        // Verificar si es una edición
         Bundle args = getArguments();
         if (args != null && args.containsKey("ingreso")) {
             ingresoExistente = (Ingreso) args.getSerializable("ingreso");
@@ -76,7 +71,6 @@ public class IngresoDialogFragment extends DialogFragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_ingreso, container, false);
 
-        // Inicializar vistas
         etTitulo = view.findViewById(R.id.etTitulo);
         etMonto = view.findViewById(R.id.etMonto);
         etDescripcion = view.findViewById(R.id.etDescripcion);
@@ -84,21 +78,16 @@ public class IngresoDialogFragment extends DialogFragment {
         btnGuardar = view.findViewById(R.id.btnGuardar);
         btnCancelar = view.findViewById(R.id.btnCancelar);
 
-        // Configurar título del diálogo
         getDialog().setTitle(esEdicion ? "Editar Ingreso" : "Nuevo Ingreso");
 
-        // Configurar selector de fecha
         etFecha.setOnClickListener(v -> mostrarSelectorFecha());
 
-        // Si es edición, cargar datos del ingreso existente
         if (esEdicion && ingresoExistente != null) {
             cargarDatosIngreso();
         } else {
-            // Por defecto mostrar la fecha actual
             etFecha.setText(dateFormat.format(calendar.getTime()));
         }
 
-        // Configurar botones
         btnGuardar.setOnClickListener(v -> guardarIngreso());
         btnCancelar.setOnClickListener(v -> dismiss());
 
@@ -136,7 +125,6 @@ public class IngresoDialogFragment extends DialogFragment {
     }
 
     private void cargarDatosIngreso() {
-        // Cargar datos del ingreso en los campos
         etTitulo.setText(ingresoExistente.getTitulo());
         etMonto.setText(String.format(Locale.getDefault(), "%.2f", ingresoExistente.getMonto()));
         etDescripcion.setText(ingresoExistente.getDescripcion());
@@ -147,13 +135,11 @@ public class IngresoDialogFragment extends DialogFragment {
             etFecha.setText(dateFormat.format(ingresoExistente.getFecha()));
         }
 
-        // Deshabilitar edición del título en modo edición
         etTitulo.setEnabled(false);
         etFecha.setEnabled(false);
     }
 
     private void guardarIngreso() {
-        // Validar campos
         if (!validarCampos()) {
             return;
         }
@@ -164,10 +150,8 @@ public class IngresoDialogFragment extends DialogFragment {
         Date fecha = calendar.getTime();
 
         if (esEdicion) {
-            // Actualizar ingreso existente
             actualizarIngreso(monto, descripcion);
         } else {
-            // Crear nuevo ingreso
             crearNuevoIngreso(titulo, monto, descripcion, fecha);
         }
     }
@@ -175,13 +159,11 @@ public class IngresoDialogFragment extends DialogFragment {
     private boolean validarCampos() {
         boolean esValido = true;
 
-        // Validar título
         if (TextUtils.isEmpty(etTitulo.getText())) {
             etTitulo.setError("El título es obligatorio");
             esValido = false;
         }
 
-        // Validar monto
         if (TextUtils.isEmpty(etMonto.getText())) {
             etMonto.setError("El monto es obligatorio");
             esValido = false;
@@ -198,7 +180,6 @@ public class IngresoDialogFragment extends DialogFragment {
             }
         }
 
-        // Validar fecha
         if (TextUtils.isEmpty(etFecha.getText())) {
             etFecha.setError("La fecha es obligatoria");
             esValido = false;
@@ -208,10 +189,8 @@ public class IngresoDialogFragment extends DialogFragment {
     }
 
     private void crearNuevoIngreso(String titulo, double monto, String descripcion, Date fecha) {
-        // Crear objeto ingreso
         Ingreso nuevoIngreso = new Ingreso(titulo, monto, descripcion, fecha);
 
-        // Guardar en Firestore
         db.collection("usuarios").document(userId)
             .collection("ingresos")
             .add(nuevoIngreso)

@@ -43,16 +43,13 @@ public class CrearPasswordActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_crear_password);
 
-        // Inicializar Firebase
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        // Obtener datos del intent
         userId = getIntent().getStringExtra("user_id");
         userEmail = getIntent().getStringExtra("user_email");
         userData = new HashMap<>();
 
-        // Recuperar todos los datos de usuario enviados desde RegistroActivity
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             for (String key : extras.keySet()) {
@@ -66,18 +63,15 @@ public class CrearPasswordActivity extends AppCompatActivity {
         }
 
         if (userId == null || userEmail == null) {
-            // Si no hay ID de usuario o correo, regresar a la pantalla principal
             Toast.makeText(this, "Error: No se pudo obtener la información del usuario", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        // Inicializar vistas
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnCrearPassword = findViewById(R.id.btnCrearPassword);
 
-        // Configurar el botón de creación de contraseña
         btnCrearPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -98,7 +92,6 @@ public class CrearPasswordActivity extends AppCompatActivity {
         String password = etPassword.getText().toString().trim();
         String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-        // Verificar que las contraseñas no estén vacías
         if (password.isEmpty()) {
             etPassword.setError("La contraseña es obligatoria");
             return false;
@@ -109,7 +102,6 @@ public class CrearPasswordActivity extends AppCompatActivity {
             return false;
         }
 
-        // Verificar que las contraseñas coincidan
         if (!password.equals(confirmPassword)) {
             etConfirmPassword.setError("Las contraseñas no coinciden");
             return false;
@@ -121,30 +113,24 @@ public class CrearPasswordActivity extends AppCompatActivity {
     private void guardarContraseñaUsuario() {
         String password = etPassword.getText().toString().trim();
 
-        // Mostrar mensaje de carga
         Toast.makeText(this, "Guardando información...", Toast.LENGTH_SHORT).show();
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null && userEmail.equals(currentUser.getEmail())) {
-            // El usuario ya está autenticado, solo necesitamos vincular la contraseña
             vincularContraseña(currentUser, password);
         } else {
-            // Podría ser necesario reautenticar o manejar algún caso especial
             Toast.makeText(this, "Error: Las credenciales de usuario no coinciden", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void vincularContraseña(FirebaseUser user, String password) {
-        // Crear una credencial con el correo y la nueva contraseña
         AuthCredential credential = EmailAuthProvider.getCredential(userEmail, password);
 
-        // Vincular esta credencial a la cuenta del usuario
         user.linkWithCredential(credential)
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Log.d(TAG, "Usuario vinculado correctamente con correo/contraseña");
 
-                    // Ahora guardamos los datos del usuario en Firestore, pero SIN la contraseña
                     guardarDatosUsuarioEnFirestore();
                 } else {
                     Log.e(TAG, "Error al vincular usuario con correo/contraseña", task.getException());
@@ -156,24 +142,20 @@ public class CrearPasswordActivity extends AppCompatActivity {
     }
 
     private void guardarDatosUsuarioEnFirestore() {
-        // Agregar el estado de sesión al mapa de datos (la contraseña NO se guarda aquí)
-        userData.put("sesion", "si");  // Actualizamos el estado a "si"
+        userData.put("sesion", "si");
 
-        // Preservar el correo si está disponible
         if (userEmail != null && !userEmail.isEmpty()) {
             userData.put("correo", userEmail);
         }
 
         Log.d(TAG, "Guardando datos para el usuario con ID: " + userId);
 
-        // Guardar datos en Firestore (sin la contraseña)
         db.collection("usuarios").document(userId)
             .set(userData)
             .addOnSuccessListener(aVoid -> {
                 Log.d(TAG, "Datos de usuario guardados correctamente");
                 Toast.makeText(CrearPasswordActivity.this, "Cuenta creada con éxito", Toast.LENGTH_SHORT).show();
 
-                // Redirigir al usuario al panel principal
                 Intent intent = new Intent(CrearPasswordActivity.this, PanelPrincipalActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);

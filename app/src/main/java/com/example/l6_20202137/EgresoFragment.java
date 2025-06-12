@@ -42,17 +42,14 @@ public class EgresoFragment extends Fragment implements EgresoAdapter.OnEgresoLi
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflar el layout para este fragment
         View view = inflater.inflate(R.layout.fragment_egreso, container, false);
 
         recyclerViewEgresos = view.findViewById(R.id.recyclerViewEgresos);
         fabAgregarEgreso = view.findViewById(R.id.fabAgregarEgreso);
 
-        // Inicializar Firebase
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        // Obtener usuario actual
         if (mAuth.getCurrentUser() != null) {
             userId = mAuth.getCurrentUser().getUid();
         } else {
@@ -60,18 +57,15 @@ public class EgresoFragment extends Fragment implements EgresoAdapter.OnEgresoLi
             return view;
         }
 
-        // Configurar RecyclerView
         listaEgresos = new ArrayList<>();
         adapter = new EgresoAdapter(listaEgresos, this);
         recyclerViewEgresos.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerViewEgresos.setAdapter(adapter);
 
-        // Configurar botón para agregar egreso
         fabAgregarEgreso.setOnClickListener(v -> {
             mostrarDialogoAgregarEgreso();
         });
 
-        // Cargar datos iniciales
         cargarEgresos();
 
         return view;
@@ -83,12 +77,10 @@ public class EgresoFragment extends Fragment implements EgresoAdapter.OnEgresoLi
     }
 
     private void cargarEgresos() {
-        // Mostrar un mensaje de carga
         if (getContext() != null) {
             Toast.makeText(getContext(), "Cargando egresos...", Toast.LENGTH_SHORT).show();
         }
 
-        // Consultar la colección 'egresos' del usuario actual, ordenados por fecha (más reciente primero)
         db.collection("usuarios").document(userId)
             .collection("egresos")
             .orderBy("fecha", Query.Direction.DESCENDING)
@@ -119,7 +111,6 @@ public class EgresoFragment extends Fragment implements EgresoAdapter.OnEgresoLi
     }
 
     private void mostrarDialogoAgregarEgreso() {
-        // Mostrar un diálogo para agregar un nuevo egreso
         EgresoDialogFragment dialogFragment = new EgresoDialogFragment();
         dialogFragment.setOnEgresoGuardadoListener(() -> cargarEgresos()); // Recargar la lista después de guardar
         dialogFragment.show(getParentFragmentManager(), "EgresoDialogFragment");
@@ -127,13 +118,11 @@ public class EgresoFragment extends Fragment implements EgresoAdapter.OnEgresoLi
 
     @Override
     public void onEgresoClick(Egreso egreso) {
-        // Mostrar detalles del egreso (puedes implementar esto si lo necesitas)
         Toast.makeText(getContext(), "Egreso: " + egreso.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onEditarClick(Egreso egreso) {
-        // Mostrar diálogo para editar egreso
         EgresoDialogFragment dialogFragment = new EgresoDialogFragment();
         Bundle args = new Bundle();
         args.putSerializable("egreso", egreso);
@@ -144,7 +133,6 @@ public class EgresoFragment extends Fragment implements EgresoAdapter.OnEgresoLi
 
     @Override
     public void onEliminarClick(Egreso egreso) {
-        // Mostrar diálogo de confirmación para eliminar
         new AlertDialog.Builder(getContext())
                 .setTitle("Eliminar Egreso")
                 .setMessage("¿Estás seguro de que quieres eliminar este egreso?")
@@ -170,7 +158,6 @@ public class EgresoFragment extends Fragment implements EgresoAdapter.OnEgresoLi
             });
     }
 
-    // Interfaz para notificar cuando un egreso ha sido guardado
     public interface OnEgresoGuardadoListener {
         void onEgresoGuardado();
     }

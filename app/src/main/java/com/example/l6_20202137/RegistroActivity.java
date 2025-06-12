@@ -42,21 +42,17 @@ public class RegistroActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_registro);
         
-        // Inicializar Firestore
         db = FirebaseFirestore.getInstance();
 
-        // Obtener datos del intent
         userId = getIntent().getStringExtra("user_id");
         userEmail = getIntent().getStringExtra("user_email");
 
         if (userId == null) {
-            // Si no hay ID de usuario, regresar a la pantalla principal
             Toast.makeText(this, "Error: No se pudo obtener la información del usuario", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        // Inicialización de componentes
         etNombres = findViewById(R.id.etNombres);
         etTelefono = findViewById(R.id.etTelefono);
         etDni = findViewById(R.id.etDni);
@@ -65,7 +61,6 @@ public class RegistroActivity extends AppCompatActivity {
         
         calendar = Calendar.getInstance();
         
-        // Configurar el campo de fecha para mostrar el DatePickerDialog
         etFechaNacimiento.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -73,12 +68,10 @@ public class RegistroActivity extends AppCompatActivity {
             }
         });
         
-        // Configurar el botón de registro
         btnRegistrarCuenta.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (validarCampos()) {
-                    // Guardar los datos en Firestore y actualizar el estado de sesión
                     guardarDatosUsuario();
                 }
             }
@@ -116,7 +109,6 @@ public class RegistroActivity extends AppCompatActivity {
     private boolean validarCampos() {
         boolean esValido = true;
         
-        // Validar que los campos no estén vacíos
         if (etNombres.getText().toString().trim().isEmpty()) {
             etNombres.setError("El nombre es obligatorio");
             esValido = false;
@@ -144,28 +136,22 @@ public class RegistroActivity extends AppCompatActivity {
     }
 
     private void guardarDatosUsuario() {
-        // Obtener los datos ingresados
         String nombres = etNombres.getText().toString().trim();
         String telefono = etTelefono.getText().toString().trim();
         String dni = etDni.getText().toString().trim();
         String fechaNacimiento = etFechaNacimiento.getText().toString().trim();
 
-        // En lugar de guardar directamente, redirigimos al usuario a la pantalla de creación de contraseña
         Intent intent = new Intent(RegistroActivity.this, CrearPasswordActivity.class);
 
-        // Pasar los datos del usuario al siguiente activity
         intent.putExtra("user_id", userId);
         intent.putExtra("user_email", userEmail);
 
-        // Pasar los datos de registro
         intent.putExtra("nombres", nombres);
         intent.putExtra("telefono", telefono);
         intent.putExtra("dni", dni);
         intent.putExtra("fechaNacimiento", fechaNacimiento);
 
-        // Iniciar la actividad de creación de contraseña
         startActivity(intent);
-        // No utilizamos finish() aquí para permitir que el usuario pueda volver atrás si lo desea
     }
 }
 

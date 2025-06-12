@@ -36,23 +36,19 @@ public class IngresoFragment extends Fragment implements IngresoAdapter.OnIngres
     private String userId;
 
     public IngresoFragment() {
-        // Constructor vacío requerido
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflar el layout para este fragment
         View view = inflater.inflate(R.layout.fragment_ingreso, container, false);
 
         recyclerViewIngresos = view.findViewById(R.id.recyclerViewIngresos);
         fabAgregarIngreso = view.findViewById(R.id.fabAgregarIngreso);
 
-        // Inicializar Firebase
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        // Obtener usuario actual
         if (mAuth.getCurrentUser() != null) {
             userId = mAuth.getCurrentUser().getUid();
         } else {
@@ -66,12 +62,10 @@ public class IngresoFragment extends Fragment implements IngresoAdapter.OnIngres
         recyclerViewIngresos.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerViewIngresos.setAdapter(adapter);
 
-        // Configurar botón para agregar ingreso
         fabAgregarIngreso.setOnClickListener(v -> {
             mostrarDialogoAgregarIngreso();
         });
 
-        // Cargar datos iniciales
         cargarIngresos();
 
         return view;
@@ -83,12 +77,10 @@ public class IngresoFragment extends Fragment implements IngresoAdapter.OnIngres
     }
 
     private void cargarIngresos() {
-        // Mostrar un mensaje de carga
         if (getContext() != null) {
             Toast.makeText(getContext(), "Cargando ingresos...", Toast.LENGTH_SHORT).show();
         }
 
-        // Consultar la colección 'ingresos' del usuario actual, ordenados por fecha (más reciente primero)
         db.collection("usuarios").document(userId)
             .collection("ingresos")
             .orderBy("fecha", Query.Direction.DESCENDING)
@@ -119,7 +111,6 @@ public class IngresoFragment extends Fragment implements IngresoAdapter.OnIngres
     }
 
     private void mostrarDialogoAgregarIngreso() {
-        // Mostrar un diálogo para agregar un nuevo ingreso
         IngresoDialogFragment dialogFragment = new IngresoDialogFragment();
         dialogFragment.setOnIngresoGuardadoListener(() -> cargarIngresos()); // Recargar la lista después de guardar
         dialogFragment.show(getParentFragmentManager(), "IngresoDialogFragment");
@@ -127,13 +118,11 @@ public class IngresoFragment extends Fragment implements IngresoAdapter.OnIngres
 
     @Override
     public void onIngresoClick(Ingreso ingreso) {
-        // Mostrar detalles del ingreso (puedes implementar esto si lo necesitas)
         Toast.makeText(getContext(), "Ingreso: " + ingreso.getTitulo(), Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onEditarClick(Ingreso ingreso) {
-        // Mostrar diálogo para editar ingreso
         IngresoDialogFragment dialogFragment = new IngresoDialogFragment();
         Bundle args = new Bundle();
         args.putSerializable("ingreso", ingreso);
@@ -144,7 +133,6 @@ public class IngresoFragment extends Fragment implements IngresoAdapter.OnIngres
 
     @Override
     public void onEliminarClick(Ingreso ingreso) {
-        // Mostrar diálogo de confirmación para eliminar
         new AlertDialog.Builder(getContext())
                 .setTitle("Eliminar Ingreso")
                 .setMessage("¿Estás seguro de que quieres eliminar este ingreso?")
@@ -162,7 +150,7 @@ public class IngresoFragment extends Fragment implements IngresoAdapter.OnIngres
             .delete()
             .addOnSuccessListener(aVoid -> {
                 Toast.makeText(getContext(), "Ingreso eliminado correctamente", Toast.LENGTH_SHORT).show();
-                cargarIngresos(); // Recargar la lista después de eliminar
+                cargarIngresos();
             })
             .addOnFailureListener(e -> {
                 Toast.makeText(getContext(), "Error al eliminar el ingreso: " + e.getMessage(),
@@ -170,7 +158,6 @@ public class IngresoFragment extends Fragment implements IngresoAdapter.OnIngres
             });
     }
 
-    // Interfaz para notificar cuando un ingreso ha sido guardado
     public interface OnIngresoGuardadoListener {
         void onIngresoGuardado();
     }

@@ -64,7 +64,6 @@ public class ResumenFragment extends Fragment {
     private double totalEgresos = 0;
 
     public ResumenFragment() {
-        // Constructor vacío requerido
     }
 
     @Override
@@ -72,17 +71,14 @@ public class ResumenFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_resumen, container, false);
 
-        // Inicializar componentes
         pieChart = view.findViewById(R.id.pieChart);
         barChart = view.findViewById(R.id.barChart);
         btnSeleccionarMes = view.findViewById(R.id.btnSeleccionarMes);
         tvMesSeleccionado = view.findViewById(R.id.tvMesSeleccionado);
         
-        // Inicializar Firebase
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         
-        // Obtener usuario actual
         if (mAuth.getCurrentUser() != null) {
             userId = mAuth.getCurrentUser().getUid();
         } else {
@@ -90,15 +86,12 @@ public class ResumenFragment extends Fragment {
             return view;
         }
         
-        // Inicializar calendario con fecha actual
         calendar = Calendar.getInstance();
         monthYearFormat = new SimpleDateFormat("MMMM yyyy", new Locale("es", "ES"));
         actualizarTextViewMes();
         
-        // Configurar botón de selección de mes
         btnSeleccionarMes.setOnClickListener(v -> mostrarSelectorMes());
         
-        // Cargar datos del mes actual
         cargarDatosDelMes();
         
         return view;
@@ -109,44 +102,35 @@ public class ResumenFragment extends Fragment {
     }
     
     private void mostrarSelectorMes() {
-        // Crear un diálogo personalizado para seleccionar solo mes y año
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         View view = getLayoutInflater().inflate(R.layout.dialog_month_year_picker, null);
         builder.setView(view);
 
-        // Configurar los NumberPickers para mes y año
         NumberPicker monthPicker = view.findViewById(R.id.monthPicker);
         NumberPicker yearPicker = view.findViewById(R.id.yearPicker);
 
-        // Configurar selector de mes (0-11 para Enero-Diciembre)
         monthPicker.setMinValue(0);
         monthPicker.setMaxValue(11);
 
-        // Establecer nombres de los meses en español
         String[] meses = new String[]{"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
                                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
         monthPicker.setDisplayedValues(meses);
 
-        // Configurar selector de año (permitir seleccionar 5 años atrás y 5 años adelante)
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         yearPicker.setMinValue(currentYear - 5);
         yearPicker.setMaxValue(currentYear + 5);
 
-        // Establecer valores iniciales basados en el calendario actual
         monthPicker.setValue(calendar.get(Calendar.MONTH));
         yearPicker.setValue(calendar.get(Calendar.YEAR));
 
-        // Crear el diálogo
         AlertDialog dialog = builder.create();
 
-        // Configurar botones
         Button btnCancel = view.findViewById(R.id.btnCancel);
         Button btnOk = view.findViewById(R.id.btnOk);
 
         btnCancel.setOnClickListener(v -> dialog.dismiss());
 
         btnOk.setOnClickListener(v -> {
-            // Actualizar el calendario con el mes y año seleccionados
             calendar.set(Calendar.YEAR, yearPicker.getValue());
             calendar.set(Calendar.MONTH, monthPicker.getValue());
             calendar.set(Calendar.DAY_OF_MONTH, 1); // Primer día del mes
@@ -157,15 +141,12 @@ public class ResumenFragment extends Fragment {
             dialog.dismiss();
         });
         
-        // Mostrar el diálogo
         dialog.show();
     }
     
     private void cargarDatosDelMes() {
-        // Mostrar mensaje de carga
         Toast.makeText(getContext(), "Cargando datos...", Toast.LENGTH_SHORT).show();
         
-        // Obtener el primer y último día del mes seleccionado
         Calendar inicioMes = (Calendar) calendar.clone();
         inicioMes.set(Calendar.DAY_OF_MONTH, 1);
         inicioMes.set(Calendar.HOUR_OF_DAY, 0);
@@ -181,11 +162,9 @@ public class ResumenFragment extends Fragment {
         Date fechaInicio = inicioMes.getTime();
         Date fechaFin = finMes.getTime();
         
-        // Reiniciar totales
         totalIngresos = 0;
         totalEgresos = 0;
         
-        // Cargar ingresos del mes
         db.collection("usuarios").document(userId)
             .collection("ingresos")
             .whereGreaterThanOrEqualTo("fecha", fechaInicio)
@@ -199,7 +178,6 @@ public class ResumenFragment extends Fragment {
                     }
                 }
                 
-                // Ahora cargar los egresos
                 db.collection("usuarios").document(userId)
                     .collection("egresos")
                     .whereGreaterThanOrEqualTo("fecha", fechaInicio)
@@ -213,7 +191,6 @@ public class ResumenFragment extends Fragment {
                             }
                         }
                         
-                        // Una vez cargados todos los datos, actualizar los gráficos
                         actualizarGraficos();
                     })
                     .addOnFailureListener(e -> {
@@ -235,7 +212,6 @@ public class ResumenFragment extends Fragment {
     }
     
     private void configurarGraficoPastel() {
-        // Configuración básica del gráfico de pastel
         pieChart.getDescription().setEnabled(false);
         pieChart.setDrawHoleEnabled(true);
         pieChart.setHoleColor(Color.WHITE);
@@ -248,10 +224,8 @@ public class ResumenFragment extends Fragment {
         pieChart.setRotationEnabled(true);
         pieChart.setHighlightPerTapEnabled(true);
         
-        // Crear entradas para el gráfico de pastel
         List<PieEntry> entries = new ArrayList<>();
         
-        // Si no hay datos, mostrar mensaje informativo
         if (totalIngresos == 0 && totalEgresos == 0) {
             entries.add(new PieEntry(1f, "Sin datos"));
         } else {
@@ -267,71 +241,57 @@ public class ResumenFragment extends Fragment {
             }
         }
         
-        // Crear y configurar el conjunto de datos
         PieDataSet dataSet = new PieDataSet(entries, "");
         dataSet.setSliceSpace(3f);
         dataSet.setSelectionShift(5f);
         
-        // Colores para las secciones
         ArrayList<Integer> colors = new ArrayList<>();
         colors.add(Color.rgb(46, 125, 50)); // Verde para ingresos
         colors.add(Color.rgb(198, 40, 40)); // Rojo para egresos
         colors.add(Color.LTGRAY); // Gris para sin datos
         dataSet.setColors(colors);
         
-        // Crear y configurar los datos
         PieData data = new PieData(dataSet);
         data.setValueTextSize(11f);
         data.setValueTextColor(Color.WHITE);
         
-        // Mostrar porcentajes
         data.setValueFormatter(new com.github.mikephil.charting.formatter.PercentFormatter(pieChart));
         
-        // Aplicar los datos al gráfico
         pieChart.setData(data);
         pieChart.highlightValues(null);
         
-        // Configurar la leyenda
         Legend l = pieChart.getLegend();
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
         l.setOrientation(Legend.LegendOrientation.HORIZONTAL);
         l.setDrawInside(false);
         
-        // Actualizar el gráfico
         pieChart.invalidate();
     }
     
     private void configurarGraficoBarras() {
-        // Configuración básica del gráfico de barras
         barChart.getDescription().setEnabled(false);
         barChart.setPinchZoom(false);
         barChart.setDrawBarShadow(false);
         barChart.setDrawGridBackground(false);
         
-        // Configurar el eje X
         XAxis xAxis = barChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(false);
         xAxis.setGranularity(1f);
         
-        // Etiquetas para el eje X
         final String[] etiquetas = new String[]{"Ingresos", "Egresos", "Consolidado"};
         xAxis.setValueFormatter(new IndexAxisValueFormatter(etiquetas));
         
-        // Configurar los ejes Y
         barChart.getAxisLeft().setDrawGridLines(true);
         barChart.getAxisRight().setEnabled(false);
-          // Crear entradas para el gráfico de barras
         List<BarEntry> entries = new ArrayList<>();
         entries.add(new BarEntry(0f, (float) totalIngresos)); // Ingresos
         entries.add(new BarEntry(1f, (float) totalEgresos)); // Egresos
         entries.add(new BarEntry(2f, (float) (totalIngresos - totalEgresos))); // Consolidado (balance neto)
         
-        // Crear y configurar el conjunto de datos
         BarDataSet dataSet = new BarDataSet(entries, "Finanzas del mes");
         
-        // Colores para las barras
         int[] colores = new int[]{
                 Color.rgb(46, 125, 50), // Verde para ingresos
                 Color.rgb(198, 40, 40), // Rojo para egresos
@@ -339,23 +299,19 @@ public class ResumenFragment extends Fragment {
         };
         dataSet.setColors(colores);
         
-        // Crear y configurar los datos
         BarData data = new BarData(dataSet);
         data.setBarWidth(0.6f);
         data.setValueTextSize(11f);
         
-        // Aplicar los datos al gráfico
         barChart.setData(data);
         barChart.setFitBars(true);
         
-        // Configurar la leyenda
         Legend l = barChart.getLegend();
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
         l.setOrientation(Legend.LegendOrientation.HORIZONTAL);
         l.setDrawInside(false);
         
-        // Actualizar el gráfico
         barChart.invalidate();
     }
 }
