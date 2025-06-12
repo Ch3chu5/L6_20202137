@@ -25,7 +25,9 @@
         android:layout_marginTop="16dp">
 
         <!-- Aquí se mostrará el contenido según la opción seleccionada -->
+        <!-- Mensaje de bienvenida con ID para poder controlarlo programáticamente -->
         <TextView
+            android:id="@+id/tvBienvenida"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"

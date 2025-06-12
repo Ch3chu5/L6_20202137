@@ -322,12 +322,11 @@ public class ResumenFragment extends Fragment {
         // Configurar los ejes Y
         barChart.getAxisLeft().setDrawGridLines(true);
         barChart.getAxisRight().setEnabled(false);
-        
-        // Crear entradas para el gráfico de barras
+          // Crear entradas para el gráfico de barras
         List<BarEntry> entries = new ArrayList<>();
         entries.add(new BarEntry(0f, (float) totalIngresos)); // Ingresos
         entries.add(new BarEntry(1f, (float) totalEgresos)); // Egresos
-        entries.add(new BarEntry(2f, (float) (totalIngresos + totalEgresos))); // Consolidado
+        entries.add(new BarEntry(2f, (float) (totalIngresos - totalEgresos))); // Consolidado (balance neto)
         
         // Crear y configurar el conjunto de datos
         BarDataSet dataSet = new BarDataSet(entries, "Finanzas del mes");
