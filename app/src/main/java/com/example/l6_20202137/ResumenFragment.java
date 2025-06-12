@@ -7,11 +7,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.example.l6_20202137.models.Egreso;
@@ -107,41 +109,56 @@ public class ResumenFragment extends Fragment {
     }
     
     private void mostrarSelectorMes() {
-        // Crear un MaterialDatePicker para seleccionar solo mes y año
-        MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker();
-        builder.setTitleText("Selecciona un mes");
-        builder.setSelection(calendar.getTimeInMillis());
-        
-        // Configurar el selector para mostrar vista de meses en lugar de días
-        CalendarConstraints.Builder constraintsBuilder = new CalendarConstraints.Builder();
+        // Crear un diálogo personalizado para seleccionar solo mes y año
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View view = getLayoutInflater().inflate(R.layout.dialog_month_year_picker, null);
+        builder.setView(view);
 
-        // Establecer la fecha mínima y máxima (opcional)
-        Calendar minCal = Calendar.getInstance();
-        minCal.add(Calendar.YEAR, -5); // 5 años atrás
+        // Configurar los NumberPickers para mes y año
+        NumberPicker monthPicker = view.findViewById(R.id.monthPicker);
+        NumberPicker yearPicker = view.findViewById(R.id.yearPicker);
 
-        Calendar maxCal = Calendar.getInstance();
-        maxCal.add(Calendar.YEAR, 5); // 5 años adelante
+        // Configurar selector de mes (0-11 para Enero-Diciembre)
+        monthPicker.setMinValue(0);
+        monthPicker.setMaxValue(11);
 
-        constraintsBuilder.setStart(minCal.getTimeInMillis());
-        constraintsBuilder.setEnd(maxCal.getTimeInMillis());
+        // Establecer nombres de los meses en español
+        String[] meses = new String[]{"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
+        monthPicker.setDisplayedValues(meses);
 
-        // Mostrar vista de calendario y establecer la fecha inicial
-        constraintsBuilder.setOpenAt(calendar.getTimeInMillis());
-        builder.setCalendarConstraints(constraintsBuilder.build());
+        // Configurar selector de año (permitir seleccionar 5 años atrás y 5 años adelante)
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        yearPicker.setMinValue(currentYear - 5);
+        yearPicker.setMaxValue(currentYear + 5);
 
-        MaterialDatePicker<Long> picker = builder.build();
-        
-        picker.addOnPositiveButtonClickListener(selection -> {
-            // Actualizar calendario con la fecha seleccionada
-            calendar.setTimeInMillis(selection);
-            // Ajustar al primer día del mes
-            calendar.set(Calendar.DAY_OF_MONTH, 1);
-            
+        // Establecer valores iniciales basados en el calendario actual
+        monthPicker.setValue(calendar.get(Calendar.MONTH));
+        yearPicker.setValue(calendar.get(Calendar.YEAR));
+
+        // Crear el diálogo
+        AlertDialog dialog = builder.create();
+
+        // Configurar botones
+        Button btnCancel = view.findViewById(R.id.btnCancel);
+        Button btnOk = view.findViewById(R.id.btnOk);
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnOk.setOnClickListener(v -> {
+            // Actualizar el calendario con el mes y año seleccionados
+            calendar.set(Calendar.YEAR, yearPicker.getValue());
+            calendar.set(Calendar.MONTH, monthPicker.getValue());
+            calendar.set(Calendar.DAY_OF_MONTH, 1); // Primer día del mes
+
             actualizarTextViewMes();
             cargarDatosDelMes();
+
+            dialog.dismiss();
         });
         
-        picker.show(getParentFragmentManager(), picker.toString());
+        // Mostrar el diálogo
+        dialog.show();
     }
     
     private void cargarDatosDelMes() {
