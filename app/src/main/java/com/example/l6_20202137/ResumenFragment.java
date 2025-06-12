@@ -2,6 +2,7 @@ package com.example.l6_20202137;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,8 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.android.material.datepicker.CalendarConstraints;
+import com.google.android.material.datepicker.DateValidatorPointForward;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -104,11 +107,28 @@ public class ResumenFragment extends Fragment {
     }
     
     private void mostrarSelectorMes() {
-        // Crear un MaterialDatePicker para seleccionar mes
+        // Crear un MaterialDatePicker para seleccionar solo mes y año
         MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker();
         builder.setTitleText("Selecciona un mes");
         builder.setSelection(calendar.getTimeInMillis());
         
+        // Configurar el selector para mostrar vista de meses en lugar de días
+        CalendarConstraints.Builder constraintsBuilder = new CalendarConstraints.Builder();
+
+        // Establecer la fecha mínima y máxima (opcional)
+        Calendar minCal = Calendar.getInstance();
+        minCal.add(Calendar.YEAR, -5); // 5 años atrás
+
+        Calendar maxCal = Calendar.getInstance();
+        maxCal.add(Calendar.YEAR, 5); // 5 años adelante
+
+        constraintsBuilder.setStart(minCal.getTimeInMillis());
+        constraintsBuilder.setEnd(maxCal.getTimeInMillis());
+
+        // Mostrar vista de calendario y establecer la fecha inicial
+        constraintsBuilder.setOpenAt(calendar.getTimeInMillis());
+        builder.setCalendarConstraints(constraintsBuilder.build());
+
         MaterialDatePicker<Long> picker = builder.build();
         
         picker.addOnPositiveButtonClickListener(selection -> {
