@@ -60,7 +60,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="8dp">
 
         <EditText
             android:id="@+id/etFecha"
@@ -72,6 +72,55 @@
             android:clickable="true"
             android:maxLines="1" />
     </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Campo de comprobante -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Comprobante *"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <Button
+                android:id="@+id/btnSeleccionarImagen"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Seleccionar Imagen"
+                android:drawableLeft="@android:drawable/ic_menu_camera"
+                style="@style/Widget.Material3.Button.OutlinedButton" />
+
+            <ImageView
+                android:id="@+id/ivComprobantePreview"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="8dp"
+                android:scaleType="centerCrop"
+                android:background="@android:drawable/editbox_background"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvEstadoComprobante"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No se ha seleccionado imagen"
+            android:textSize="12sp"
+            android:textColor="@android:color/holo_red_dark"
+            android:layout_marginTop="4dp" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

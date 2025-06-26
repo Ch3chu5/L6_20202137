@@ -1,12 +1,22 @@
 package com.example.l6_20202137;
 
+import android.Manifest;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcel;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,6 +24,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.l6_20202137.models.Egreso;
@@ -39,6 +51,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -48,10 +61,14 @@ import java.util.Locale;
 
 public class ResumenFragment extends Fragment {
 
+    private static final int PERMISSION_REQUEST_CODE = 1001;
+    
     private PieChart pieChart;
     private BarChart barChart;
     private Button btnSeleccionarMes;
+    private Button btnDescargarResumen;
     private TextView tvMesSeleccionado;
+    private LinearLayout layoutGraficos;
     
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
@@ -74,7 +91,9 @@ public class ResumenFragment extends Fragment {
         pieChart = view.findViewById(R.id.pieChart);
         barChart = view.findViewById(R.id.barChart);
         btnSeleccionarMes = view.findViewById(R.id.btnSeleccionarMes);
+        btnDescargarResumen = view.findViewById(R.id.btnDescargarResumen);
         tvMesSeleccionado = view.findViewById(R.id.tvMesSeleccionado);
+        layoutGraficos = view.findViewById(R.id.layoutGraficos);
         
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -91,6 +110,13 @@ public class ResumenFragment extends Fragment {
         actualizarTextViewMes();
         
         btnSeleccionarMes.setOnClickListener(v -> mostrarSelectorMes());
+        btnDescargarResumen.setOnClickListener(v -> {
+            if (verificarPermisos()) {
+                descargarGraficos();
+            } else {
+                solicitarPermisos();
+            }
+        });
         
         cargarDatosDelMes();
         
@@ -313,5 +339,123 @@ public class ResumenFragment extends Fragment {
         l.setDrawInside(false);
         
         barChart.invalidate();
+    }
+    
+    private boolean verificarPermisos() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            // Android 13+ - Solo necesita READ_MEDIA_IMAGES
+            return ContextCompat.checkSelfPermission(requireContext(), 
+                Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED;
+        } else {
+            // Android 12 y anteriores
+            return ContextCompat.checkSelfPermission(requireContext(), 
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        }
+    }
+    
+    private void solicitarPermisos() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(requireActivity(),
+                new String[]{Manifest.permission.READ_MEDIA_IMAGES}, 
+                PERMISSION_REQUEST_CODE);
+        } else {
+            ActivityCompat.requestPermissions(requireActivity(),
+                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, 
+                            Manifest.permission.READ_EXTERNAL_STORAGE}, 
+                PERMISSION_REQUEST_CODE);
+        }
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                descargarGraficos();
+            } else {
+                Toast.makeText(getContext(), 
+                    "Se necesitan permisos de almacenamiento para descargar los gráficos", 
+                    Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+    
+    private void descargarGraficos() {
+        try {
+            // Capturar el layout que contiene ambos gráficos
+            Bitmap bitmap = capturarLayoutComoBitmap(layoutGraficos);
+            
+            if (bitmap != null) {
+                guardarImagenEnGaleria(bitmap);
+                Toast.makeText(getContext(), 
+                    "Gráficos descargados exitosamente en la galería", 
+                    Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getContext(), 
+                    "Error al generar la imagen de los gráficos", 
+                    Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(getContext(), 
+                "Error al descargar los gráficos: " + e.getMessage(), 
+                Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private Bitmap capturarLayoutComoBitmap(View view) {
+        try {
+            // Asegurar que el view esté completamente dibujado
+            view.measure(View.MeasureSpec.makeMeasureSpec(view.getWidth(), View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(view.getHeight(), View.MeasureSpec.EXACTLY));
+            view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
+            
+            Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            view.draw(canvas);
+            return bitmap;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    private void guardarImagenEnGaleria(Bitmap bitmap) {
+        try {
+            String fechaActual = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).format(new Date());
+            String mesSeleccionado = monthYearFormat.format(calendar.getTime());
+            String nombreArchivo = "Resumen_Financiero_" + mesSeleccionado.replace(" ", "_") + "_" + fechaActual + ".png";
+            
+            ContentResolver contentResolver = requireContext().getContentResolver();
+            ContentValues contentValues = new ContentValues();
+            
+            contentValues.put(MediaStore.Images.Media.DISPLAY_NAME, nombreArchivo);
+            contentValues.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Resumen Financiero");
+                contentValues.put(MediaStore.Images.Media.IS_PENDING, 1);
+            }
+            
+            Uri imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+            
+            if (imageUri != null) {
+                OutputStream outputStream = contentResolver.openOutputStream(imageUri);
+                if (outputStream != null) {
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                    outputStream.close();
+                    
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        contentValues.clear();
+                        contentValues.put(MediaStore.Images.Media.IS_PENDING, 0);
+                        contentResolver.update(imageUri, contentValues, null, null);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(), 
+                "Error al guardar la imagen: " + e.getMessage(), 
+                Toast.LENGTH_SHORT).show();
+        }
     }
 }

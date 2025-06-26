@@ -9,6 +9,7 @@ public class Ingreso implements Serializable {
     private double monto;
     private String descripcion;
     private Date fecha;
+    private String foto; // Campo que coincide con Firebase
 
     // Constructor vacío requerido para Firestore
     public Ingreso() {
@@ -19,6 +20,15 @@ public class Ingreso implements Serializable {
         this.monto = monto;
         this.descripcion = descripcion;
         this.fecha = fecha;
+    }
+
+    // Constructor con foto
+    public Ingreso(String titulo, double monto, String descripcion, Date fecha, String foto) {
+        this.titulo = titulo;
+        this.monto = monto;
+        this.descripcion = descripcion;
+        this.fecha = fecha;
+        this.foto = foto;
     }
 
     // Getters y setters
@@ -60,5 +70,22 @@ public class Ingreso implements Serializable {
 
     public void setFecha(Date fecha) {
         this.fecha = fecha;
+    }
+
+    public String getFoto() {
+        return foto;
+    }
+
+    public void setFoto(String foto) {
+        this.foto = foto;
+    }
+
+    // Método de compatibilidad para el adapter existente
+    public String getUrlComprobante() {
+        return foto;
+    }
+
+    public void setUrlComprobante(String urlComprobante) {
+        this.foto = urlComprobante;
     }
 }
